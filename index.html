@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quick Numerology Analysis</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+    font-family:'Arial',sans-serif;
+    background: linear-gradient(135deg, #caafe0 0%, #350c48 100%);
+    min-height: 100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:20px;
+}
+
+.container {
+    background:white;
+    padding:40px;
+    border-radius:20px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.3);
+    max-width:800px;
+    width:100%;
+}
+
+h1 {
+    text-align:center;
+    color:#764ba2;
+    margin-bottom:10px;
+    font-size:28px;
+}
+
+.subtitle {
+    text-align:center;
+    color:#667eea;
+    margin-bottom:30px;
+    font-size:14px;
+    font-style:italic;
+}
+
+.input-group {
+    margin-bottom:20px;
+}
+
+label {
+    display:block;
+    margin-bottom:8px;
+    color:#764ba2;
+    font-weight:bold;
+    font-size:14px;
+}
+
+input {
+    width:100%;
+    padding:12px;
+    font-size:16px;
+    border:2px solid #ddd;
+    border-radius:8px;
+    transition:border-color 0.3s;
+}
+
+input:focus {
+    outline:none;
+    border-color:#667eea;
+}
+
+.api-note {
+    font-size:11px;
+    color:#999;
+    margin-top:5px;
+}
+
+button {
+    width:100%;
+    padding:15px;
+    font-size:18px;
+    font-weight:bold;
+    color:white;
+    background: linear-gradient(135deg, #caafe0 0%, #350c48 100%);
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+    transition: transform 0.2s;
+    margin-top:10px;
+}
+
+button:hover {
+    transform: translateY(-2px);
+}
+
+button:disabled {
+    opacity:0.6;
+    cursor:not-allowed;
+}
+
+.loading {
+    display:none;
+    text-align:center;
+    color:#764ba2;
+    margin:20px 0;
+    font-style:italic;
+}
+
+.loading.show { display:block; }
+
+.results {
+    display:none;
+    margin-top:30px;
+    padding:25px;
+    background:linear-gradient(135deg, rgba(102,126,234,0.1), rgba(118,75,162,0.1));
+    border-radius:15px;
+    border:2px solid #764ba2;
+}
+
+.results.show { display:block; }
+
+.results h2 {
+    color:#764ba2;
+    margin-bottom:20px;
+    text-align:center;
+    font-size:22px;
+}
+
+.results ul {
+    list-style:none;
+    padding:0;
+}
+
+.results li {
+    padding:12px;
+    margin:10px 0;
+    background:white;
+    border-left:4px solid #667eea;
+    border-radius:8px;
+    line-height:1.6;
+    color:#333;
+}
+
+.results li strong {
+    color:#764ba2;
+}
+
+.error {
+    display:none;
+    padding:15px;
+    background:#fee;
+    border:2px solid #f66;
+    border-radius:8px;
+    color:#c33;
+    margin-top:15px;
+    text-align:center;
+}
+
+.error.show { display:block; }
+
+.energies-display {
+    text-align:center;
+    margin:15px 0;
+    padding:15px;
+    background:rgba(102,126,234,0.1);
+    border-radius:10px;
+    font-size:14px;
+    color:#764ba2;
+}
+
+.footer {
+    text-align:center;
+    margin-top:30px;
+    font-size:11px;
+    color:#999;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h1> Quick Numerology Analysis</h1>
+    <div class="subtitle">KARMA_DECODED</div>
+    
+    <div class="input-group">
+        <label>Date of Birth (DD/MM/YYYY):</label>
+        <input type="text" id="dob" placeholder="15/08/1990" maxlength="10">
+    </div>
+    
+    <button onclick="analyze()">Analyze Person</button>
+    
+    <div class="loading" id="loading">💜 Analyzing energies and generating insights...</div>
+    
+    <div class="error" id="error"></div>
+    
+    <div class="results" id="results">
+        <div class="energies-display" id="energies"></div>
+        <h2>Quick Analysis Points</h2>
+        <ul id="bulletPoints"></ul>
+    </div>
+    
+    <div class="footer">KARMA_DECODED | Maria Fistican | © All Rights Reserved</div>
+</div>
+
+<script>
+// Auto-format date input
+document.getElementById('dob').addEventListener('input', function(e){
+    let value = e.target.value.replace(/\D/g, '');
+    if(value.length >= 2) value = value.substring(0,2) + '/' + value.substring(2);
+    if(value.length >= 5) value = value.substring(0,5) + '/' + value.substring(5);
+    e.target.value = value.substring(0,10);
+});
+
+function reduceToMax22(num){
+    while(num>22) num=num.toString().split('').reduce((s,d)=>s+parseInt(d),0);
+    return num;
+}
+
+async function analyze(){
+    const apiKey = 'AIzaSyAOdmFbQ8RwhefMtCyj3F6ttX74v9aXIQE'; // Embedded API key
+    const dob = document.getElementById('dob').value.trim();
+    const error = document.getElementById('error');
+    const loading = document.getElementById('loading');
+    const results = document.getElementById('results');
+    
+    // Hide previous results
+    error.classList.remove('show');
+    results.classList.remove('show');
+    
+    // Validate inputs
+    if(!/^\d{2}\/\d{2}\/\d{4}$/.test(dob)){
+        error.textContent = 'Invalid date format. Use DD/MM/YYYY';
+        error.classList.add('show');
+        return;
+    }
+    
+    const [day,month,year] = dob.split('/').map(Number);
+    if(day<1||day>31||month<1||month>12){
+        error.textContent = 'Invalid date. Please check the day and month.';
+        error.classList.add('show');
+        return;
+    }
+    
+    // Calculate energies
+    const A = reduceToMax22(day);
+    const B = reduceToMax22(month);
+    const C = reduceToMax22(year.toString().split('').reduce((s,d)=>s+parseInt(d),0));
+    const D = reduceToMax22(A+B+C);
+    const E = reduceToMax22(A+B+C+D);
+    const M = reduceToMax22(A+B);
+    const N = reduceToMax22(B+C);
+    const O = reduceToMax22(C+D);
+    const P = reduceToMax22(D+E);
+    const Q = reduceToMax22(E+A);
+    const CENTER = reduceToMax22(A+B+C+D+E);
+    
+    // Display energies
+    document.getElementById('energies').innerHTML = `
+        <strong>Key Energies:</strong> 
+        Personality: ${A} | Spirituality: ${B} | Wealth: ${C} | 
+        Relationship: ${D} | Health: ${E} | Soul Mission: ${CENTER}
+    `;
+    
+    // Show loading
+    loading.classList.add('show');
+    
+    // Create prompt for Gemini with YOUR matrix knowledge (condensed from full HTML)
+    const matrixKnowledge = `
+=== PERSONALITY/TALENT ENERGIES ===
+1: Leader, innovator, pioneer. Must become independent and share knowledge. Risk: pride, egoism, unwillingness to accept help.
+2: Intuitive, healer, diplomat with strong empathy. Must reconcile with mother and trust intuition. Risk: secretiveness, gossip, dependency.
+3: Creative, fertile, maternal energy. Must balance career and family, love children. Risk: pride, control, sacrificing self for others.
+4: Builder, provider, stable foundation. Must take responsibility and lead family. Risk: tyranny, excessive control, coldness.
+5: Teacher, systematic thinker. Must learn and share knowledge respectfully. Risk: intellectual pride, imposing views, conservative rigidity.
+6: Harmonious, lover of beauty and relationships. Must love self first. Risk: superficiality, low self-esteem, dependence on others.
+7: Warrior, goal-oriented mover. Must stay active and lead teams. Risk: laziness OR aggression, inability to rest.
+8: Just, lawful, wealthy builder. Must respect karma and build systems. Risk: obsession with justice, fear of betrayal, greed.
+9: Wise spiritual healer with deep knowledge. Must share wisdom, not isolate. Risk: loneliness, asceticism, intellectual pride.
+10: Lucky, flowing, trusting the universe. Must let go of control and say yes to opportunities. Risk: hyper-control, distrust, laziness.
+11: Powerful, charitable, strong leader. Must help others and manage aggression. Risk: violence, workaholism, suppressing others.
+12: Service-oriented, innovative thinker. Must help without self-sacrifice. Risk: victimhood, manipulation, living for others.
+13: Transformative, resilient, fearless of change. Must embrace transformation. Risk: self-destruction, addictions, fear of change.
+14: Creative healer, balanced soul. Must practice moderation and share talents. Risk: greed, excess, scattering energy.
+15: Magnetic, powerful, tempting. Must resist darkness and use power for good. Risk: addictions, manipulation, dark magic.
+16: Builder of empires and systems. Must transform old into new. Risk: destruction, aggression, clinging to past.
+17: Star, talented, destined for fame. Must believe in gifts and shine publicly. Risk: insecurity, plagiarism, celebrity syndrome.
+18: Esoteric, intuitive, sensitive soul. Must overcome fears and heal others. Risk: depression, deception, dark magic.
+19: Solar leader of masses with warmth. Must not suppress others with power. Risk: pride, aggression, self-destruction.
+20: Family keeper, lineage continuer. Must forgive family and heal ancestry. Risk: resentment toward parents, dependency.
+21: Peacemaker, global thinker, free spirit. Must unite people and stay independent. Risk: intolerance, dependence, isolation.
+22: Eternal child, free orator. Must take responsibility while staying light. Risk: infantilism, addictions, irresponsibility.
+
+=== SPIRITUAL MISSIONS ===
+1: Master mind and word, become spiritual guide through positive thinking.
+2: Give unconditional love, develop intuition, become healer of souls.
+3: Build family, pass on knowledge, develop feminine/masculine balance appropriately.
+4: Embody masculine strength, take responsibility, become wise father figure.
+5: Become spiritual teacher, honor traditions while bringing new perspectives.
+6: Learn to build harmonious relationships, show world how to love with ease.
+7: Realize warrior energy, lead masses peacefully toward victory.
+8: Master karmic laws, maintain inner balance, serve justice objectively.
+9: Share wisdom, reveal healing abilities, teach from spiritual depth.
+10: Master flow energy, see opportunities, transmit vision to masses.
+11: Use great strength for good, lead and inspire, engage in charity.
+12: Serve others genuinely, share new knowledge, balance service with self-care.
+13: Master change, show people transformation is necessary for growth.
+14: Reveal creative abilities, bring people to beauty, balance material and spiritual.
+15: Help others overcome vices, see good in people, know forgiveness.
+16: Spiritually awaken, expand consciousness, build anew what was destroyed.
+17: Reveal talents to world, inspire others, be spiritual mentor.
+18: Awaken esoteric gift, use magical energy for good, guide and heal.
+19: Live for society's benefit, lead large groups, warm hearts with solar energy.
+20: Realize gift as healer and seer, transmit true values through wisdom.
+21: Carry mission of peace, unite all people as brothers and sisters.
+22: Easily bring newness, realize through creativity, transmit freedom and lightness.
+
+=== WEALTH/CAREER PATTERNS ===
+1: Self-employment, leadership positions, teaching. Blocked by: pride, unwillingness to lead. Powered by: belief in self, taking responsibility.
+2: Work with women/children, communication, healing, singing. Blocked by: stress, resentment toward mother. Powered by: intuition, being visible.
+3: Beauty industry, creativity, family business. Blocked by: "I'll do everything myself", not loving self. Powered by: passive income, femininity.
+4: Management, construction, long-term investments. Blocked by: excessive control, authoritarianism. Powered by: own business, systematic work.
+5: Teaching, accounting, consulting, IT. Blocked by: chaos, intellectual pride. Powered by: sharing knowledge, structured learning.
+6: Aesthetics, art, sales, psychology. Blocked by: superficiality, low self-esteem. Powered by: loving self, working with joy.
+7: Travel, sports, military, logistics. Blocked by: stagnation, laziness. Powered by: movement, discipline, leadership.
+8: Law, justice, business systems. Blocked by: illegal activity, obsession with justice. Powered by: legal work, understanding karma.
+9: Science, healing, spirituality, teaching. Blocked by: loneliness, pride. Powered by: intellectual work, charity.
+10: Online work, flexible schedule, team player. Blocked by: rigid schedule, control. Powered by: freedom, saying yes, intuition.
+11: Sports, helping others, charity, leadership. Blocked by: aggression, burnout. Powered by: alternating work and rest.
+12: Creativity, innovation, helping professions. Blocked by: inability to say no, victimhood. Powered by: sincere service, creativity.
+13: Transformation work, crisis management, innovation. Blocked by: fear of change, self-destruction. Powered by: project-based work, courage.
+14: Creative arts, teaching, diplomacy. Blocked by: greed, impatience. Powered by: self-restraint, creativity, patience.
+15: Large-scale fields, leadership, management. Blocked by: desire for free money, greed. Powered by: working for big money passionately.
+16: Building systems, crisis management, innovation. Blocked by: clinging to what's failing. Powered by: building from scratch, trust.
+17: Fame-based careers, creativity, public speaking. Blocked by: not believing in talents. Powered by: revealing talents, becoming famous.
+18: Healing, esotericism, image creation, water-related. Blocked by: fears, shady dealings. Powered by: positive thinking, spiritual work.
+19: Public leadership, social activities, own business. Blocked by: pride, greed. Powered by: generosity, leading with kindness.
+20: Family business, communication, healing lineage. Blocked by: resentment toward family. Powered by: helping family, intuition.
+21: International work, peace activities, languages. Blocked by: dependence, negative beliefs. Powered by: freedom, global projects.
+22: Creative work, speaking, teaching youth. Blocked by: irresponsibility, addictions. Powered by: discipline, using voice, fulfilling childhood dreams.
+
+=== RELATIONSHIP PATTERNS ===
+1: Natural leader seeking compassionate partnership. Needs to avoid pride and lead with love.
+2: Seeks deep emotional connection and trust. Must overcome secrecy and mother issues.
+3: Nurturing parent figure. Women must soften, men must strengthen masculinity appropriately.
+4: Serious, reliable, seeks stability. Must avoid coldness and excessive control.
+5: Values variety and intellectual connection. Must respect others' views and not impose.
+6: Seeks beauty and harmony. Must love self before demanding love from others.
+7: Active, adventurous, seeks aligned partner. Must balance work and relationships.
+8: Values loyalty and justice in partnership. Must not expect fairness or obsess over betrayal.
+9: Self-sufficient, wise, chooses partners carefully. Must not isolate or play rescuer.
+10: Light, spontaneous, distrustful initially. Must trust more and control less.
+11: Strong warrior seeking wise partner. Must control aggression and not suppress.
+12: Caring and giving, can sacrifice too much. Must not be victim or live for others.
+13: Transformative, can be harsh or unstable. Must control emotions and not destroy impulsively.
+14: Creative, sensitive, needs variety. Must respect others' interests and avoid greed.
+15: Seductive, passionate, magnetic. Must avoid manipulation and stay faithful.
+16: Reliable through crises, spiritually strong. Must not destroy relationships impulsively.
+17: Bright star seeking admiration. Must believe in self and not suppress with fame.
+18: Deep, intuitive, family-oriented. Must overcome fears and not retreat into fantasy.
+19: Powerful leader needing recognition. Must not suppress others or show pride.
+20: Sensual, family-focused, seeks sincerity. Must forgive family and not manipulate.
+21: Open-minded, adventurous, values freedom. Must be independent and accept others.
+22: Playful child at heart. Must take responsibility without losing lightness.
+
+=== HEALTH CONSIDERATIONS ===
+1: Nervous system, respiratory, brain, bones. Must stay active, delegate, rest.
+2: Kidneys, bladder, gynecological, heart. Must love self, express feelings, reconcile with mother.
+3: Weight issues, skin, gynecological, diabetes. Must fulfill parental role, improve relationship with mother.
+4: Spine, brain, skeletal system, teeth. Must strengthen father relationship, balance with creativity.
+5: Liver, nervous system, sexual blocks, addictions, insomnia. Must develop sexuality, maintain health, avoid burnout.
+6: Skin, lungs, gynecology, weight extremes. Must love body and self, work through insecurity.
+7: Addictions, joint problems, teeth. Must structure life, engage in sports, travel.
+8: Intestines, immune disorders, metabolism. Must bring positivity, rest, avoid fear of betrayal.
+9: Hereditary diseases, premature aging, bone problems. Must express socially, practice healing, live in present.
+10: Respiratory, circulatory, fluid retention. Must take responsibility, stay active, run in mornings.
+11: Injuries, fractures, animal diseases. Must be peaceful, help others, practice sports.
+12: Deep depression, allergies, varicose veins. Must do what brings joy, find resonant creativity.
+13: Risk-taking injuries, self-destruction. Must avoid unnecessary risks, value life.
+14: Gluttony, blood vessels, bladder. Must practice self-restraint, maintain diet.
+15: Mental disorders, addictions, sexual issues. Must avoid promiscuity, develop healthy sexuality.
+16: Diabetes, organ removal, falls, burns. Must move away from aggression, not destroy life.
+17: Panic attacks, insomnia, neuroses. Must step into potential, avoid overwork, believe in self.
+18: Autism in children, mental disorders, oncology. Must focus on positivity, not close off.
+19: Heart, blood, burns. Must not take on world's problems, avoid burning others with intensity.
+20: Disability in children, genetic diseases. Must maintain family connection, work through lineage.
+21: Weakened immunity, hormonal issues, allergies. Must live freely, pay attention to nutrition.
+22: Addictions, childhood illnesses, neuroses. Must overcome fears, take responsibility, monitor health.
+
+=== SOUL MISSIONS (CENTER) ===
+1: Lead and share knowledge, master thought power, be spiritual guide.
+2: Give unconditional love, serve people, reveal healing abilities.
+3: Become parent and teacher, pass knowledge to next generation.
+4: Embody masculine strength, create opportunities for others to prosper.
+5: Become spiritual teacher, carry forward lineage traditions with new vision.
+6: Help others awaken sexuality healthily, embody love and harmony.
+7: Be warrior-leader, engage in service, show people how to live actively.
+8: Build systems creating opportunities, protect law and justice, achieve inner harmony.
+9: Become spiritual healer and guide, seek life's meaning, share wisdom.
+10: Grow strong, take responsibility, bring happiness to those around you.
+11: Learn service and charity, master emotions, never give up in crisis.
+12: Self-sacrifice for higher purpose, learn to listen and forgive, show compassion.
+13: Attain power, become pioneer, share unique perspective with world.
+14: Become creator and teacher, live harmoniously, guide through works.
+15: Be Divine messenger, study esotericism, stir emotions and inspire awareness.
+16: Build empires and structures, establish new values, lead to spiritual world.
+17: Achieve recognition through creativity, develop talents, inspire through works.
+18: Engage with spirituality, create comfort, develop intuition and crafts.
+19: Achieve high status, support and inspire, serve as model leader.
+20: Continue lineage work, protect traditions, ensure family wellbeing.
+21: Create world peace, unite people, honor homeland while working internationally.
+22: Guide others to true goals, unite all missions, be friend to humanity.
+
+=== PAST LIFE ERRORS (KEY PATTERNS) ===
+Fatal errors that block current life if not worked through - condensed key points.
+
+=== ANCESTRAL PROGRAMS (KEY PATTERNS) ===
+Unresolved family patterns passed through lineage that must be healed.
+`;
+
+    const prompt = `You are analyzing person born ${dob} using Matrix of Destiny numerology.
+
+CALCULATED ENERGIES:
+- Personality/Talent (Day ${day}): Energy ${A}
+- Spiritual Mission (Month ${month}): Energy ${B}
+- Wealth/Career (Year ${year}): Energy ${C}
+- Relationships: Energy ${D}
+- Health: Energy ${E}
+- Soul Mission (Center): Energy ${CENTER}
+- Ancestral Programs: ${M}, ${N}, ${O}, ${P}, ${Q}
+
+MATRIX KNOWLEDGE BASE:
+${matrixKnowledge}
+
+Using ONLY the matrix knowledge above, create 12-15 concise talking points for a live reading. Write as if speaking directly to the client in second person ("You are...").
+
+Structure the points to cover:
+1-2 points: Core personality strengths from Energy ${A}
+2-3 points: Main challenges/blocks from Energy ${A}
+1-2 points: Spiritual path from Energy ${B}
+1-2 points: Career/money patterns from Energy ${C}
+1-2 points: Relationship style from Energy ${D}
+1 point: Health focus from Energy ${E}
+1-2 points: Soul mission from Energy ${CENTER}
+1-2 points: Most important ancestral pattern to work through
+
+Be direct, specific, and insightful. Each point 1-2 sentences max. Format as bullet points starting with dash (-).`;
+
+    try {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{
+                    parts: [{ text: prompt }]
+                }]
+            })
+        });
+        
+        const data = await response.json();
+        
+        if(!response.ok){
+            throw new Error(data.error?.message || 'API request failed');
+        }
+        
+        const text = data.candidates[0].content.parts[0].text;
+        
+        // Parse bullet points
+        const bullets = text.split('\n')
+            .filter(line => line.trim().startsWith('-'))
+            .map(line => line.trim().substring(1).trim());
+        
+        // Display results
+        const ul = document.getElementById('bulletPoints');
+        ul.innerHTML = '';
+        
+        bullets.forEach(bullet => {
+            const li = document.createElement('li');
+            li.textContent = bullet;
+            ul.appendChild(li);
+        });
+        
+        loading.classList.remove('show');
+        results.classList.add('show');
+        
+    } catch(err) {
+        loading.classList.remove('show');
+        error.textContent = `Error: ${err.message}. Please check your API key.`;
+        error.classList.add('show');
+    }
+}
+</script>
+
+</body>
+</html>
