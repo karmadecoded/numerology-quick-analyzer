@@ -40,9 +40,9 @@ export default async function handler(req, res) {
 
     console.log('Calling Gemini API...');
 
-    // FIXED: Use correct model name and API version
+    // USING YOUR ORIGINAL WORKING MODEL NAME
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -66,7 +66,7 @@ export default async function handler(req, res) {
       });
     }
 
-    // Extract text from Gemini response
+    // Extract text - using YOUR original response structure
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
     
     if (!text) {
