@@ -439,8 +439,14 @@ Be direct, specific, and insightful. Each point 1-2 sentences max. Format as bul
         
         const data = await response.json();
         
+        console.log('Response data:', data); // Debug log
+        
         if(!data.success){
             throw new Error(data.error || 'API request failed');
+        }
+        
+        if(!data.text){
+            throw new Error('No text received from server');
         }
         
         const text = data.text;
@@ -449,6 +455,10 @@ Be direct, specific, and insightful. Each point 1-2 sentences max. Format as bul
         const bullets = text.split('\n')
             .filter(line => line.trim().startsWith('-'))
             .map(line => line.trim().substring(1).trim());
+        
+        if(bullets.length === 0){
+            throw new Error('No bullet points found in response');
+        }
         
         // Display results
         const ul = document.getElementById('bulletPoints');
