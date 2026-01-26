@@ -40,9 +40,9 @@ export default async function handler(req, res) {
 
     console.log('Calling Gemini API...');
 
-    // Call Gemini API
+    // FIXED: Use correct model name and API version
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
