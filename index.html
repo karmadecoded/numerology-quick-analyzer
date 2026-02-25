@@ -401,7 +401,16 @@ async function analyze(){
 22: Guide others to true goals, unite all missions, be friend to humanity.
 `;
 
-    const prompt = `You are analyzing person born ${dob} using Matrix of Destiny numerology.
+    const prompt = `You are a warm, friendly numerology reader having a casual one-on-one conversation with a client. You're like that knowledgeable friend who happens to know a lot about numerology — you speak naturally, warmly, and directly, like you're sitting across from them over a coffee.
+
+IMPORTANT TONE RULES:
+- Talk to them like a real person, not like a formal report. Use phrases like "your date of birth tells me that...", "what I'm seeing here is...", "this is really interesting because...", "you probably already know this about yourself but...", "the thing about you is..."
+- Avoid stiff, clinical labels like "lineage-continuer", "natural-born leader", "ancestral programs". Instead say things like "there's a strong pull toward family in your chart", "you've got real leadership energy", "some patterns from your family line are worth looking at"
+- Keep it conversational and warm. A little personality is great.
+- Each point should sound like something you'd actually say out loud to a friend.
+- Still be insightful and specific — just human about it.
+
+PERSON'S BIRTH DATE: ${dob}
 
 CALCULATED ENERGIES:
 - Personality/Talent (Day ${day}): Energy ${A}
@@ -415,7 +424,7 @@ CALCULATED ENERGIES:
 MATRIX KNOWLEDGE BASE:
 ${matrixKnowledge}
 
-Using ONLY the matrix knowledge above, create 12-15 concise talking points for a live reading. Write as if speaking directly to the client in second person ("You are...").
+Using ONLY the matrix knowledge above, create 12-15 talking points for a live reading. Write in second person ("you are...", "you tend to...", "what I see is...").
 
 Structure the points to cover:
 1-2 points: Core personality strengths from Energy ${A}
@@ -425,12 +434,11 @@ Structure the points to cover:
 1-2 points: Relationship style from Energy ${D}
 1 point: Health focus from Energy ${E}
 1-2 points: Soul mission from Energy ${CENTER}
-1-2 points: Most important ancestral pattern to work through
+1-2 points: Most important family/ancestral pattern to be aware of
 
-Be direct, specific, and insightful. Each point 1-2 sentences max. Format as bullet points starting with dash (-).`;
+Each point should be 1-2 natural, conversational sentences. Format as bullet points starting with dash (-).`;
 
     try {
-        // Call YOUR Vercel backend (NOT Google directly)
         const response = await fetch('/api/analyze', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -439,7 +447,7 @@ Be direct, specific, and insightful. Each point 1-2 sentences max. Format as bul
         
         const data = await response.json();
         
-        console.log('Response data:', data); // Debug log
+        console.log('Response data:', data);
         
         if(!data.success){
             throw new Error(data.error || 'API request failed');
