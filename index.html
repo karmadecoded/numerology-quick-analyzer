@@ -15,7 +15,6 @@ body {
     align-items:center;
     padding:20px;
 }
-
 .container {
     background:white;
     padding:40px;
@@ -24,14 +23,12 @@ body {
     max-width:800px;
     width:100%;
 }
-
 h1 {
     text-align:center;
     color:#764ba2;
     margin-bottom:10px;
     font-size:28px;
 }
-
 .subtitle {
     text-align:center;
     color:#667eea;
@@ -39,11 +36,7 @@ h1 {
     font-size:14px;
     font-style:italic;
 }
-
-.input-group {
-    margin-bottom:20px;
-}
-
+.input-group { margin-bottom:20px; }
 label {
     display:block;
     margin-bottom:8px;
@@ -51,7 +44,6 @@ label {
     font-weight:bold;
     font-size:14px;
 }
-
 input {
     width:100%;
     padding:12px;
@@ -60,12 +52,7 @@ input {
     border-radius:8px;
     transition:border-color 0.3s;
 }
-
-input:focus {
-    outline:none;
-    border-color:#667eea;
-}
-
+input:focus { outline:none; border-color:#667eea; }
 button {
     width:100%;
     padding:15px;
@@ -79,16 +66,8 @@ button {
     transition: transform 0.2s;
     margin-top:10px;
 }
-
-button:hover {
-    transform: translateY(-2px);
-}
-
-button:disabled {
-    opacity:0.6;
-    cursor:not-allowed;
-}
-
+button:hover { transform: translateY(-2px); }
+button:disabled { opacity:0.6; cursor:not-allowed; }
 .loading {
     display:none;
     text-align:center;
@@ -96,9 +75,7 @@ button:disabled {
     margin:20px 0;
     font-style:italic;
 }
-
 .loading.show { display:block; }
-
 .results {
     display:none;
     margin-top:30px;
@@ -107,21 +84,14 @@ button:disabled {
     border-radius:15px;
     border:2px solid #764ba2;
 }
-
 .results.show { display:block; }
-
 .results h2 {
     color:#764ba2;
     margin-bottom:20px;
     text-align:center;
     font-size:22px;
 }
-
-.results ul {
-    list-style:none;
-    padding:0;
-}
-
+.results ul { list-style:none; padding:0; }
 .results li {
     padding:12px;
     margin:10px 0;
@@ -131,11 +101,7 @@ button:disabled {
     line-height:1.6;
     color:#333;
 }
-
-.results li strong {
-    color:#764ba2;
-}
-
+.results li strong { color:#764ba2; }
 .error {
     display:none;
     padding:15px;
@@ -146,9 +112,7 @@ button:disabled {
     margin-top:15px;
     text-align:center;
 }
-
 .error.show { display:block; }
-
 .energies-display {
     text-align:center;
     margin:15px 0;
@@ -158,7 +122,13 @@ button:disabled {
     font-size:14px;
     color:#764ba2;
 }
-
+.tone-badge {
+    text-align:center;
+    margin-bottom:15px;
+    font-size:12px;
+    color:#999;
+    font-style:italic;
+}
 .footer {
     text-align:center;
     margin-top:30px;
@@ -181,11 +151,11 @@ button:disabled {
     <button onclick="analyze()">Analyze Person</button>
     
     <div class="loading" id="loading">💜 Analyzing energies and generating insights...</div>
-    
     <div class="error" id="error"></div>
     
     <div class="results" id="results">
         <div class="energies-display" id="energies"></div>
+        <div class="tone-badge" id="toneBadge"></div>
         <h2>Quick Analysis Points</h2>
         <ul id="bulletPoints"></ul>
     </div>
@@ -194,7 +164,6 @@ button:disabled {
 </div>
 
 <script>
-// Auto-format date input
 document.getElementById('dob').addEventListener('input', function(e){
     let value = e.target.value.replace(/\D/g, '');
     if(value.length >= 2) value = value.substring(0,2) + '/' + value.substring(2);
@@ -207,17 +176,67 @@ function reduceToMax22(num){
     return num;
 }
 
+// 12 distinct narrator voices — randomly selected each reading
+const narratorStyles = [
+    {
+        name: "Warm & Curious Friend",
+        instruction: `Speak like a warm, curious friend who genuinely finds this person fascinating. Use phrases that show real interest — "oh this is such an interesting combination...", "I love that about this chart...", "you know what's funny about this?". Be enthusiastic and personal. Make them feel seen and special.`
+    },
+    {
+        name: "Direct & Grounded",
+        instruction: `Be direct, clear, and grounded — no fluff. Get straight to the point like someone who respects the person's time. Use phrases like "here's the thing about you...", "let's be honest...", "the reality of your chart is...". Still warm but confident and no-nonsense.`
+    },
+    {
+        name: "Mystical & Poetic",
+        instruction: `Speak with a slightly mystical, poetic quality — like someone who sees the deeper patterns in everything. Use rich, evocative language. Phrases like "there's a beautiful tension in your chart...", "the universe placed something quite rare here...", "this energy carries a very particular kind of light...". Still clear and practical but with depth and wonder.`
+    },
+    {
+        name: "Storyteller",
+        instruction: `Frame the reading like you're telling the story of this person's soul journey. Use narrative language — "what your numbers are really telling me is a story of...", "imagine someone who was born to...", "this is the chapter of your life where...". Make it feel like an unfolding story they're living.`
+    },
+    {
+        name: "Gentle & Compassionate",
+        instruction: `Be soft, gentle, and deeply compassionate — like a trusted mentor who believes in this person completely. Use nurturing language: "I want you to hear this as a gift...", "and this is actually something to be really proud of...", "there's a real tenderness to this part of your chart...". Especially gentle when discussing challenges.`
+    },
+    {
+        name: "Playfully Provocative",
+        instruction: `Be a little playful and gently provocative — like someone who enjoys shaking people awake in a fun way. Use phrases like "okay so here's where it gets interesting...", "I'm going to say something you might not expect...", "brace yourself because this is actually really good news...". Keep it light but make them think.`
+    },
+    {
+        name: "Wise Elder",
+        instruction: `Speak with the calm authority of someone who has seen a lot and understands deeply. Measured, thoughtful, full of quiet confidence. Phrases like "what I've come to understand about this energy is...", "over time, people with this chart tend to...", "and here's what becomes clear when you look at the bigger picture...". Never rushed, always wise.`
+    },
+    {
+        name: "Energetic & Motivating",
+        instruction: `Be high-energy and motivating — like a life coach who is genuinely excited about what they see. Use phrases like "this is honestly such a powerful chart...", "you have no idea how much potential is sitting here...", "this is actually an incredible gift if you use it right...". Make them feel fired up and ready.`
+    },
+    {
+        name: "Thoughtful & Philosophical",
+        instruction: `Take a thoughtful, slightly philosophical approach — like someone who loves exploring the deeper meaning of things. Use phrases like "what's really at the heart of this is...", "if you think about it from a different angle...", "there's something almost paradoxical here that's worth sitting with...". Make them think and reflect.`
+    },
+    {
+        name: "Conversational & Casual",
+        instruction: `Super casual and conversational — like a friend texting you insights. Short sentences. Real talk. Phrases like "so basically what's happening here is...", "and honestly? this makes so much sense...", "the big thing I notice is...". No formality whatsoever, just real human conversation.`
+    },
+    {
+        name: "Intuitive & Sensing",
+        instruction: `Speak as if you're reading the energy in real time, picking up on things as they come. Use language that feels spontaneous and intuitive: "I'm getting a strong sense that...", "what comes up immediately when I look at this is...", "there's something here that feels really significant...". Make it feel alive and present.`
+    },
+    {
+        name: "Empowering & Bold",
+        instruction: `Be bold and empowering — speak to the highest version of this person. Use strong affirming language: "you were genuinely built for this...", "this chart is not asking you to play small...", "there is real power here and it's yours to claim...". Make them feel their own potential.`
+    }
+];
+
 async function analyze(){
     const dob = document.getElementById('dob').value.trim();
     const error = document.getElementById('error');
     const loading = document.getElementById('loading');
     const results = document.getElementById('results');
     
-    // Hide previous results
     error.classList.remove('show');
     results.classList.remove('show');
     
-    // Validate inputs
     if(!/^\d{2}\/\d{2}\/\d{4}$/.test(dob)){
         error.textContent = 'Invalid date format. Use DD/MM/YYYY';
         error.classList.add('show');
@@ -244,17 +263,18 @@ async function analyze(){
     const Q = reduceToMax22(E+A);
     const CENTER = reduceToMax22(A+B+C+D+E);
     
-    // Display energies
     document.getElementById('energies').innerHTML = `
         <strong>Key Energies:</strong> 
         Personality: ${A} | Spirituality: ${B} | Wealth: ${C} | 
         Relationship: ${D} | Health: ${E} | Soul Mission: ${CENTER}
     `;
     
-    // Show loading
+    // Pick a random narrator style each time
+    const chosenStyle = narratorStyles[Math.floor(Math.random() * narratorStyles.length)];
+    document.getElementById('toneBadge').textContent = `Reading style: ${chosenStyle.name}`;
+    
     loading.classList.add('show');
     
-    // Create prompt for AI
     const matrixKnowledge = `
 === PERSONALITY/TALENT ENERGIES ===
 1: Leader, innovator, pioneer. Must become independent and share knowledge. Risk: pride, egoism, unwillingness to accept help.
@@ -401,14 +421,18 @@ async function analyze(){
 22: Guide others to true goals, unite all missions, be friend to humanity.
 `;
 
-    const prompt = `You are a warm, friendly numerology reader having a casual one-on-one conversation with a client. You're like that knowledgeable friend who happens to know a lot about numerology — you speak naturally, warmly, and directly, like you're sitting across from them over a coffee.
+    const prompt = `You are a numerology reader giving a live reading. Your speaking style for THIS reading is:
 
-IMPORTANT TONE RULES:
-- Talk to them like a real person, not like a formal report. Use phrases like "your date of birth tells me that...", "what I'm seeing here is...", "this is really interesting because...", "you probably already know this about yourself but...", "the thing about you is..."
-- Avoid stiff, clinical labels like "lineage-continuer", "natural-born leader", "ancestral programs". Instead say things like "there's a strong pull toward family in your chart", "you've got real leadership energy", "some patterns from your family line are worth looking at"
-- Keep it conversational and warm. A little personality is great.
-- Each point should sound like something you'd actually say out loud to a friend.
-- Still be insightful and specific — just human about it.
+"${chosenStyle.name}" — ${chosenStyle.instruction}
+
+CRITICAL: Stay in this voice the entire reading. Every single bullet point should sound like it came from this specific style. Do NOT mix styles or default to generic language.
+
+Also: let the energy numbers naturally influence your tone. For example:
+- Energy 7 (warrior) or 11 (powerful leader) → be bolder, more punchy
+- Energy 2 (healer) or 18 (sensitive/intuitive) → be softer, more feeling-based
+- Energy 22 (playful) or 10 (flowing) → be lighter, more playful
+- Energy 9 (wise) or 8 (karmic) → be deeper, more philosophical
+Always blend the chosen narrator style WITH the personality of the dominant energies.
 
 PERSON'S BIRTH DATE: ${dob}
 
@@ -419,14 +443,14 @@ CALCULATED ENERGIES:
 - Relationships: Energy ${D}
 - Health: Energy ${E}
 - Soul Mission (Center): Energy ${CENTER}
-- Ancestral Programs: ${M}, ${N}, ${O}, ${P}, ${Q}
+- Supporting Energies: ${M}, ${N}, ${O}, ${P}, ${Q}
 
 MATRIX KNOWLEDGE BASE:
 ${matrixKnowledge}
 
-Using ONLY the matrix knowledge above, create 12-15 talking points for a live reading. Write in second person ("you are...", "you tend to...", "what I see is...").
+Using ONLY the matrix knowledge above, write 12-15 talking points for this live reading. Use second person ("you", "your"). NO clinical labels — speak naturally like a real person talking to another real person.
 
-Structure the points to cover:
+Cover:
 1-2 points: Core personality strengths from Energy ${A}
 2-3 points: Main challenges/blocks from Energy ${A}
 1-2 points: Spiritual path from Energy ${B}
@@ -434,9 +458,9 @@ Structure the points to cover:
 1-2 points: Relationship style from Energy ${D}
 1 point: Health focus from Energy ${E}
 1-2 points: Soul mission from Energy ${CENTER}
-1-2 points: Most important family/ancestral pattern to be aware of
+1-2 points: Key family/ancestral pattern to be aware of
 
-Each point should be 1-2 natural, conversational sentences. Format as bullet points starting with dash (-).`;
+Each point: 1-2 sentences max. Format as bullet points starting with dash (-).`;
 
     try {
         const response = await fetch('/api/analyze', {
@@ -447,31 +471,17 @@ Each point should be 1-2 natural, conversational sentences. Format as bullet poi
         
         const data = await response.json();
         
-        console.log('Response data:', data);
+        if(!data.success) throw new Error(data.error || 'API request failed');
+        if(!data.text) throw new Error('No text received from server');
         
-        if(!data.success){
-            throw new Error(data.error || 'API request failed');
-        }
-        
-        if(!data.text){
-            throw new Error('No text received from server');
-        }
-        
-        const text = data.text;
-        
-        // Parse bullet points
-        const bullets = text.split('\n')
+        const bullets = data.text.split('\n')
             .filter(line => line.trim().startsWith('-'))
             .map(line => line.trim().substring(1).trim());
         
-        if(bullets.length === 0){
-            throw new Error('No bullet points found in response');
-        }
+        if(bullets.length === 0) throw new Error('No bullet points found in response');
         
-        // Display results
         const ul = document.getElementById('bulletPoints');
         ul.innerHTML = '';
-        
         bullets.forEach(bullet => {
             const li = document.createElement('li');
             li.textContent = bullet;
